@@ -1,4 +1,6 @@
 
+using Task.Manager.Api.Endpoints;
+
 namespace Task.Manager.Api
 {
     public class Program
@@ -26,6 +28,8 @@ namespace Task.Manager.Api
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
+
+            app.MapEndpoints();
 
             app.Run();
         }

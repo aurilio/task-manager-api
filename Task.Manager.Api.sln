@@ -5,7 +5,7 @@ VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Task.Manager.Api", "src\Task.Manager.Api\Task.Manager.Api.csproj", "{7E88EC5A-4631-427E-A819-019CB0C83E5D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Task.Manager.Domain", "src\Task.Manager.Domain\Task.Manager.Domain.csproj", "{8F848CCD-B145-4158-A073-CF1E47883960}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Task.Manager.Domain", "src\Task.Manager.Domain\Task.Manager.Domain.csproj", "{8F848CCD-B145-4158-A073-CF1E47883960}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "01 - Presentation", "01 - Presentation", "{D31F6ED6-07BF-4793-B91F-5280922A90B6}"
 EndProject
@@ -17,11 +17,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "04 - CrossCutting", "04 - C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "98 - Tests", "98 - Tests", "{47AF3E52-29D8-4DE5-8E33-584885EBD388}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Task.Manager.Data", "src\Task.Manager.Data\Task.Manager.Data.csproj", "{5105AC44-AA0A-4086-B76D-59587E4EF796}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Task.Manager.Data", "src\Task.Manager.Data\Task.Manager.Data.csproj", "{5105AC44-AA0A-4086-B76D-59587E4EF796}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Task.Manager.IoC", "src\Task.Manager.IoC\Task.Manager.IoC.csproj", "{EBA50024-F643-4177-8CDE-BC3034BD8FF1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Task.Manager.IoC", "src\Task.Manager.IoC\Task.Manager.IoC.csproj", "{EBA50024-F643-4177-8CDE-BC3034BD8FF1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Task.Manager.Domain.Tests", "tests\Task.Manager.Domain.Tests\Task.Manager.Domain.Tests.csproj", "{635C85C6-CC7F-428B-AEC1-074C0206F1AF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Task.Manager.Domain.Tests", "tests\Task.Manager.Domain.Tests\Task.Manager.Domain.Tests.csproj", "{635C85C6-CC7F-428B-AEC1-074C0206F1AF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Task.Manager.Shareable", "src\Task.Manager.Shareable\Task.Manager.Shareable.csproj", "{06198F7A-03D5-40FA-B776-88D1C77D95C1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,6 +51,10 @@ Global
 		{635C85C6-CC7F-428B-AEC1-074C0206F1AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{635C85C6-CC7F-428B-AEC1-074C0206F1AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{635C85C6-CC7F-428B-AEC1-074C0206F1AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06198F7A-03D5-40FA-B776-88D1C77D95C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06198F7A-03D5-40FA-B776-88D1C77D95C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06198F7A-03D5-40FA-B776-88D1C77D95C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06198F7A-03D5-40FA-B776-88D1C77D95C1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -59,6 +65,7 @@ Global
 		{5105AC44-AA0A-4086-B76D-59587E4EF796} = {3FEA3650-FD90-46AB-A987-7621E2FA816D}
 		{EBA50024-F643-4177-8CDE-BC3034BD8FF1} = {EB4EE458-B468-4D45-87A5-F2ADE1AE5268}
 		{635C85C6-CC7F-428B-AEC1-074C0206F1AF} = {47AF3E52-29D8-4DE5-8E33-584885EBD388}
+		{06198F7A-03D5-40FA-B776-88D1C77D95C1} = {EB4EE458-B468-4D45-87A5-F2ADE1AE5268}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AE4B0B55-7AF0-4A96-AF26-68E840D492C1}
