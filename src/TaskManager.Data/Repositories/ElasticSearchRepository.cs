@@ -52,5 +52,25 @@ namespace TaskManager.Data.Repositories
                 throw new Exception($"Failed to delete task from Elasticsearch: {response.ServerError?.Error}");
             }
         }
+
+        public async Task<IEnumerable<TaskEntity>> SearchTasksAsync(string search, int pageNumber, int pageSize)
+        {
+            var response = await _elasticClient.SearchAsync<TaskEntity>(s => s
+                .Query(q => q.QueryString(qs => qs.Query(search)))
+                .From((pageNumber - 1) * pageSize)
+                .Size(pageSize)
+            );
+
+            return response.Documents;
+        }
+
+        public async Task<int> GetTotalTaskCountAsync(string search)
+        {
+            var response = await _elasticClient.CountAsync<TaskEntity>(s => s
+                .Query(q => q.QueryString(qs => qs.Query(search)))
+            );
+
+            return (int)response.Count;
+        }
     }
 }

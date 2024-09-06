@@ -13,4 +13,8 @@ public interface ITaskRepository
     Task UpdateTaskAsync(TaskEntity task);
 
     Task DeleteTaskAsync(Guid id);
+    
+    Task<IEnumerable<TaskEntity>> GetTasksWithPaginationAsync(int pageNumber, int pageSize);
+    
+    Task<int> GetTotalTasksCountAsync();
 }

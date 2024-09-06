@@ -44,4 +44,18 @@ public class TaskRepository : ITaskRepository
             await _context.SaveChangesAsync();
         }
     }
+
+    public async Task<IEnumerable<TaskEntity>> GetTasksWithPaginationAsync(int pageNumber, int pageSize)
+    {
+        return await _context.TaskEntities
+            .OrderBy(t => t.CreatedAt)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+    }
+
+    public async Task<int> GetTotalTasksCountAsync()
+    {
+        return await _context.TaskEntities.CountAsync();
+    }
 }

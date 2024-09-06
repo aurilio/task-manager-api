@@ -37,9 +37,12 @@ public static class Endpoints
            .WithTags("Tarefas");
     }
 
-    private static async Task<GetAllTaskResponse> GetAllTasksAsync([FromServices] IMediator mediator)
+    private static async Task<GetAllTaskResponse> GetAllTasksAsync(
+        [FromServices] IMediator mediator,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20)
     {
-        return await mediator.Send(new GetAllTasksRequest());
+        return await mediator.Send(new GetAllTasksRequest(pageNumber, pageSize ));
     }
 
     private static async Task<GetTaskResponse> GetTaskAsync([FromServices] IMediator mediator, [FromBody] Guid id)
@@ -47,9 +50,13 @@ public static class Endpoints
         return await mediator.Send(new GetTaskRequest() { TaskId = id });
     }
 
-    private static async Task<GetTasksBySearchResponse> GetTasksWithNameAsync([FromServices] IMediator mediator, [FromBody] string search)
+    private static async Task<GetTasksBySearchResponse> GetTasksWithNameAsync(
+        [FromServices] IMediator mediator,
+        [FromQuery] string search,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20)
     {
-        return await mediator.Send(new GetTasksBySearchRequest() { Search = search });
+        return await mediator.Send(new GetTasksBySearchRequest(search, pageNumber, pageSize));
     }
 
     private static async Task<CreateTaskResponse> CreateTaskAsync ([FromServices] IMediator mediator, TaskEntityDTO taskEntityDTO)
