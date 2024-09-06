@@ -17,10 +17,6 @@ namespace Task.Manager.Api
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             
-            builder.Services.AddDbContext<TaskDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
