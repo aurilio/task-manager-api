@@ -1,18 +1,17 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using TaskManager.Domain;
-using FluentValidation;
-using TaskManager.Shareable.Validators;
-using TaskManager.Domain.Repositories;
-using TaskManager.Data.Repositories;
-using TaskManager.Data;
+﻿using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Nest;
 using RabbitMQ.Client;
-using StackExchange.Redis;
-using TaskManager.Domain.Handlers;
-using TaskManager.Domain.Interfaces;
-using TaskManager.Messaging;
+using TaskManager.Data;
 using TaskManager.Data.Cache;
+using TaskManager.Data.Repositories;
+using TaskManager.Domain;
+using TaskManager.Domain.Interfaces;
+using TaskManager.Domain.Repositories;
+using TaskManager.Messaging;
+using TaskManager.Shareable.Validators;
 
 namespace TaskManager.IoC
 {
@@ -27,11 +26,6 @@ namespace TaskManager.IoC
             {
                 options.Configuration = services.BuildServiceProvider().GetRequiredService<IConfiguration>().GetConnectionString("RedisConnection");
             });
-
-            // Registro dos handlers e repositórios
-            //services.AddScoped<CreateTaskHandler>();
-            services.AddScoped<ITaskRepository, TaskRepository>();
-
 
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DomainEntryPoint).Assembly));
 
@@ -53,6 +47,18 @@ namespace TaskManager.IoC
                     Password = configuration["RabbitMQ:Password"]
                 };
                 return factory.CreateConnection();
+            });
+
+            services.AddSingleton<IElasticClient>(sp =>
+            {
+                var configuration = sp.GetRequiredService<IConfiguration>();
+                var uri = configuration["ElasticSearch:Uri"];
+                var defaultIndex = configuration["ElasticSearch:DefaultIndex"];
+
+                var settings = new ConnectionSettings(new Uri(uri))
+                    .DefaultIndex(defaultIndex);
+
+                return new ElasticClient(settings);
             });
 
             return services;

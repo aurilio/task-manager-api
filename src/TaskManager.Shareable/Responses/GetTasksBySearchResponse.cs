@@ -2,7 +2,7 @@
 
 namespace TaskManager.Shareable.Responses
 {
-    public class GetAllTaskResponse
+    public class GetTasksBySearchResponse
     {
         public List<TaskEntityDTO> Tasks { get; set; } = new List<TaskEntityDTO>();
     }

@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Serilog;
 using TaskManager.Domain.Interfaces;
 using TaskManager.Domain.Repositories;
 using TaskManager.Shareable.Requests;
@@ -10,22 +11,43 @@ namespace TaskManager.Domain.Handlers
     {
         private readonly ITaskRepository _taskRepository;
         private readonly ICacheService _cacheService;
-        private readonly IMessageBus _messageBus;
+        private readonly IElasticSearchRepository _elasticSearchRepository;
+        private readonly ILogger _logger;
 
-        public DeleteTaskHandler(ITaskRepository taskRepository, ICacheService cacheService, IMessageBus messageBus)
+        public DeleteTaskHandler(
+            ITaskRepository taskRepository,
+            ICacheService cacheService,
+            IElasticSearchRepository elasticSearchRepository,
+            ILogger logger)
         {
             _taskRepository = taskRepository;
             _cacheService = cacheService;
-            _messageBus = messageBus;
+            _elasticSearchRepository = elasticSearchRepository;
+            _logger = logger;
         }
 
         public async Task<DeleteTaskResponse> Handle(DeleteTaskRequest request, CancellationToken cancellationToken)
         {
-            await _taskRepository.DeleteTaskAsync(request.TaskId);
-            
-            await _cacheService.RemoveCacheAsync(request.TaskId.ToString());
+            _logger.Information("[DeleteTaskHandler] Iniciando exclusão de dados da Tarefa com TaskId: {TaskId}", request.TaskId);
 
-            return new DeleteTaskResponse() { Success = false, Message = "Tarefa excluída com sucesso." };
+            try
+            {
+                await _taskRepository.DeleteTaskAsync(request.TaskId);
+                _logger.Information("[DeleteTaskHandler] Tarefa com Id: {TaskId} excluída do bando de dados", request.TaskId);
+
+                await _elasticSearchRepository.RemoveTaskAsync(request.TaskId);
+                _logger.Information("[DeleteTaskHandler] Tarefa com TaskId: {TaskId} removida do ElasticSearch", request.TaskId);
+
+                await _cacheService.RemoveCacheAsync(request.TaskId.ToString());
+                _logger.Information("[DeleteTaskHandler] Tarefa com TaskId: {TaskId} removida do cache Redis", request.TaskId);
+
+                return new DeleteTaskResponse { Success = true, Message = "Tarefa excluída com sucesso!" };
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "[DeleteTaskHandler] Erro ao deletar Tarefa com TaskId: {TaskId}", request.TaskId);
+                throw;
+            }
         }
     }
 }

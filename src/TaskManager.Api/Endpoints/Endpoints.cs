@@ -18,6 +18,11 @@ public static class Endpoints
             .WithSummary("Obtém uma tarefa pelo ID")
             .WithDescription("Retorna uma tarefa específica com base no ID fornecido.")
             .WithTags("Tarefas");
+        
+        app.MapGet("/tasks/search", GetTasksWithNameAsync)
+            .WithSummary("Obtém uma tarefa pelo ID")
+            .WithDescription("Retorna uma tarefa específica com base no ID fornecido.")
+            .WithTags("Tarefas");
 
         app.MapPost("/tasks", CreateTaskAsync)
            .WithSummary("Cria uma nova tarefa")
@@ -40,6 +45,11 @@ public static class Endpoints
     private static async Task<GetTaskResponse> GetTaskAsync([FromServices] IMediator mediator, [FromBody] Guid id)
     {
         return await mediator.Send(new GetTaskRequest() { TaskId = id });
+    }
+
+    private static async Task<GetTasksBySearchResponse> GetTasksWithNameAsync([FromServices] IMediator mediator, [FromBody] string search)
+    {
+        return await mediator.Send(new GetTasksBySearchRequest() { Search = search });
     }
 
     private static async Task<CreateTaskResponse> CreateTaskAsync ([FromServices] IMediator mediator, TaskEntityDTO taskEntityDTO)
