@@ -6,6 +6,6 @@ namespace Task.Manager.Shareable.Requests
 {
     public class UpdateTaskRequest : IRequest<UpdateTaskResponse>
     {
-        public TaskEntityDTO TaskEntityDTO { get; set; }
+        public TaskEntityDTO TaskEntityDTO { get; set; } = default!;
     }
 }

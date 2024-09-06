@@ -2,6 +2,8 @@
 using Task.Manager.Domain;
 using FluentValidation;
 using Task.Manager.Shareable.Validators;
+using Task.Manager.Domain.Repositories;
+using Task.Manager.Data.Repositories;
 
 namespace Task.Manager.IoC
 {
@@ -12,11 +14,11 @@ namespace Task.Manager.IoC
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DomainEntryPoint).Assembly));
 
             serviceCollection.AddValidatorsFromAssemblyContaining<CreateTaskRequestValidator>();
+            serviceCollection.AddValidatorsFromAssemblyContaining<GetTaskRequestValidator>();
+            serviceCollection.AddValidatorsFromAssemblyContaining<UpdateTaskRequestValidator>();
+            serviceCollection.AddValidatorsFromAssemblyContaining<DeleteTaskRequestValidator>();
 
-
-
-            // Outras injeções de serviços (como banco de dados, Redis, RabbitMQ, etc.)
-            //services.AddScoped<ITaskRepository, TaskRepository>();
+            services.AddScoped<ITaskRepository, TaskRepository>();
 
             return services;
         }

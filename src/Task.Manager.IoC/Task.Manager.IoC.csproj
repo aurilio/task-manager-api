@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Task.Manager.Data\Task.Manager.Data.csproj" />
     <ProjectReference Include="..\Task.Manager.Domain\Task.Manager.Domain.csproj" />
   </ItemGroup>
 
