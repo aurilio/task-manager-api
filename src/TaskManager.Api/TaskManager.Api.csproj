@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\TaskManager.Data\TaskManager.Data.csproj" />
     <ProjectReference Include="..\TaskManager.Domain\TaskManager.Domain.csproj" />
+    <ProjectReference Include="..\TaskManager.IoC\TaskManager.IoC.csproj" />
   </ItemGroup>
 
 </Project>

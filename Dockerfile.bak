@@ -18,37 +18,18 @@ COPY ["src/TaskManager.Shareable/TaskManager.Shareable.csproj", "src/TaskManager
 
 # Restaura as dependências dos projetos
 RUN dotnet restore "src/TaskManager.Api/TaskManager.Api.csproj"
-RUN dotnet restore "src/TaskManager.Domain/TaskManager.Domain.csproj"
-RUN dotnet restore "src/TaskManager.Data/TaskManager.Data.csproj"
-RUN dotnet restore "src/TaskManager.IoC/TaskManager.IoC.csproj"
-RUN dotnet restore "src/TaskManager.Messaging/TaskManager.Messaging.csproj"
-RUN dotnet restore "src/TaskManager.Shareable/TaskManager.Shareable.csproj"
 
 # Copia o restante do código-fonte
 COPY . .
 
 # Compila o projeto
-WORKDIR src/TaskManager.Api
+WORKDIR /src
+COPY ["TaskManager.Api.csproj", "./"]
 RUN dotnet build "TaskManager.Api.csproj" -c Release -o /app/build
-
-WORKDIR src/TaskManager.Domain
-RUN dotnet build "TaskManager.Domain.csproj" -c Release -o /app/build
-
-WORKDIR src/TaskManager.Data
-RUN dotnet build "TaskManager.Data.csproj" -c Release -o /app/build
-
-WORKDIR src/TaskManager.IoC
-RUN dotnet build "TaskManager.IoC.csproj" -c Release -o /app/build
-
-WORKDIR src/TaskManager.Messaging
-RUN dotnet build "TaskManager.Messaging.csproj" -c Release -o /app/build
-
-WORKDIR src/TaskManager.Shareable
-RUN dotnet build "TaskManager.Shareable.csproj" -c Release -o /app/build
 
 # Etapa 3: Publica o projeto
 FROM build AS publish
-WORKDIR src/TaskManager.Api
+WORKDIR "/src/."
 RUN dotnet publish "TaskManager.Api.csproj" -c Release -o /app/publish
 
 # Etapa 4: Imagem final

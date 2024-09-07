@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using TaskManager.Api.Endpoints;
 using TaskManager.Data;
+using TaskManager.IoC;
 
 namespace TaskManager.Api
 {
@@ -27,6 +28,7 @@ namespace TaskManager.Api
 
                 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
                 builder.Services.AddEndpointsApiExplorer();
+                builder.Services.AddApplicationServices(builder.Configuration);
                 builder.Services.AddSwaggerGen();
 
                 var app = builder.Build();
