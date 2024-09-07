@@ -9,7 +9,7 @@ using TaskManager.Shareable.Responses;
 
 namespace TaskManager.Domain.Handlers
 {
-    internal class GetTasksHandler : IRequestHandler<GetTaskRequest, GetTaskResponse>
+    public class GetTasksHandler : IRequestHandler<GetTaskRequest, GetTaskResponse>
     {
         private readonly ITaskRepository _taskRepository;
         private readonly ICacheService _cacheService;

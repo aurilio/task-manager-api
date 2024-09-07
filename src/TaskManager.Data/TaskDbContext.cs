@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using TaskManager.Data.EntityConfigurations;
 using TaskManager.Domain.Entities;
 
 namespace TaskManager.Data;
@@ -12,7 +13,8 @@ public class TaskDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<TaskEntity>().HasKey(t => t.Id);
+        modelBuilder.ApplyConfiguration(new TaskEntityConfiguration());
+
         base.OnModelCreating(modelBuilder);
     }
 }

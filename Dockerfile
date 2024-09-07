@@ -1,0 +1,38 @@
+# Etapa 1: Imagem base com ASP.NET Core Runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
+
+# Etapa 2: Imagem de construção com .NET SDK
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copia todos os arquivos .csproj e restaura as dependências
+COPY ["src/TaskManager.Api/TaskManager.Api.csproj", "src/TaskManager.Api/"]
+COPY ["src/TaskManager.Domain/TaskManager.Domain.csproj", "src/TaskManager.Domain/"]
+COPY ["src/TaskManager.Data/TaskManager.Data.csproj", "src/TaskManager.Data/"]
+COPY ["src/TaskManager.IoC/TaskManager.IoC.csproj", "src/TaskManager.IoC/"]
+COPY ["src/TaskManager.Messaging/TaskManager.Messaging.csproj", "src/TaskManager.Messaging/"]
+COPY ["src/TaskManager.Shareable/TaskManager.Shareable.csproj", "src/TaskManager.Shareable/"]
+
+# Restaura as dependências dos projetos
+RUN dotnet restore "src/TaskManager.Api/TaskManager.Api.csproj"
+
+# Copia o restante do código-fonte
+COPY . .
+
+# Compila o projeto
+WORKDIR src/TaskManager.Api
+RUN dotnet build "TaskManager.Api.csproj" -c Release -o /app/build
+
+# Etapa 3: Publica o projeto
+FROM build AS publish
+WORKDIR src/TaskManager.Api
+RUN dotnet publish "TaskManager.Api.csproj" -c Release -o /app/publish
+
+# Etapa 4: Imagem final
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "TaskManager.Api.dll"]

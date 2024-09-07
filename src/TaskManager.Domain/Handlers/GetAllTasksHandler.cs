@@ -35,7 +35,7 @@ namespace TaskManager.Domain.Handlers
                 return new GetAllTaskResponse { Tasks = new List<TaskEntityDTO>(), TotalPages = totalPages, CurrentPage = request.PageNumber };
             }
 
-            _logger.Information("[GetAllTasksHandler] {TaskCount} tarefas encontradas no banco de dados.", tasks.Count());
+            _logger.Information("[GetAllTasksHandler] {TaskCount} Tarefas encontradas no banco de dados.", tasks.Count());
 
             var taskDtos = tasks.Select(task => new TaskEntityDTO
             {
