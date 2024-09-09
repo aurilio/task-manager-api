@@ -1,6 +1,5 @@
-﻿namespace TaskManager.Domain
+﻿namespace TaskManager.Domain;
+
+public class DomainEntryPoint
 {
-    public class DomainEntryPoint
-    {
-    }
 }

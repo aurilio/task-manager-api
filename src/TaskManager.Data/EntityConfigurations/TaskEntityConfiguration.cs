@@ -8,6 +8,8 @@ public class TaskEntityConfiguration : IEntityTypeConfiguration<TaskEntity>
 {
     public void Configure(EntityTypeBuilder<TaskEntity> builder)
     {
+        builder.ToTable("TaskEntity");
+
         builder.HasKey(t => t.Id);
 
         builder.Property(t => t.Title)
@@ -18,6 +20,11 @@ public class TaskEntityConfiguration : IEntityTypeConfiguration<TaskEntity>
                .IsRequired()
                .HasMaxLength(500);
 
-        builder.Property(t => t.CreatedAt);
+        builder.Property(t => t.IsCompleted);
+
+        builder.Property(t => t.CreatedAt)
+               .IsRequired();
+
+        builder.Property(t => t.UpdatedAt);
     }
 }

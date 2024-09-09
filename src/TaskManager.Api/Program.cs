@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using TaskManager.Api.Endpoints;
 using TaskManager.Data;
+using TaskManager.IoC;
 
 namespace TaskManager.Api
 {
@@ -10,9 +11,13 @@ namespace TaskManager.Api
         public static void Main(string[] args)
         {
             // Configura o Serilog antes de construir o host
+            //Log.Logger = new LoggerConfiguration()
+            //    .ReadFrom.Configuration(BuildConfiguration()) // Lê configuração do appsettings.json
+            //    .WriteTo.Console() // Adicione outros sinks conforme necessário
+            //    .CreateLogger();
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(BuildConfiguration()) // Lê configuração do appsettings.json
-                .WriteTo.Console() // Adicione outros sinks conforme necessário
+                .WriteTo.Console() // Escreve logs no console
                 .CreateLogger();
 
             try
@@ -27,9 +32,16 @@ namespace TaskManager.Api
 
                 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
                 builder.Services.AddEndpointsApiExplorer();
+                builder.Services.AddApplicationServices(builder.Configuration);
                 builder.Services.AddSwaggerGen();
 
                 var app = builder.Build();
+
+                using (var scope = app.Services.CreateScope())
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService<TaskDbContext>();
+                    dbContext.Database.Migrate(); // Aplica as migrações pendentes
+                }
 
                 // Configure the HTTP request pipeline.
                 if (app.Environment.IsDevelopment())

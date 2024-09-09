@@ -12,6 +12,9 @@ using TaskManager.Domain.Interfaces;
 using TaskManager.Domain.Repositories;
 using TaskManager.Messaging;
 using TaskManager.Shareable.Validators;
+using MediatR;
+using StackExchange.Redis;
+using Serilog;
 
 namespace TaskManager.IoC
 {
@@ -19,15 +22,61 @@ namespace TaskManager.IoC
     {
         public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
         {
+            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DomainEntryPoint).Assembly));
+                    
             services.AddDbContext<TaskDbContext>(options =>
-                options.UseSqlServer(services.BuildServiceProvider().GetRequiredService<IConfiguration>().GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"), sqlOptions => sqlOptions.EnableRetryOnFailure()));
 
-            services.AddStackExchangeRedisCache(options =>
+            var redisConnectionString = configuration.GetConnectionString("RedisConnection");
+
+            services.AddSingleton<IConnectionMultiplexer>(sp =>
             {
-                options.Configuration = services.BuildServiceProvider().GetRequiredService<IConfiguration>().GetConnectionString("RedisConnection");
+                var configuration = ConfigurationOptions.Parse(redisConnectionString);
+                configuration.AbortOnConnectFail = false;
+                return ConnectionMultiplexer.Connect(configuration);
             });
 
-            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DomainEntryPoint).Assembly));
+            services.AddSingleton(sp =>
+            {
+                var configuration = sp.GetRequiredService<IConfiguration>();
+
+                var factory = new ConnectionFactory()
+                {
+                    HostName = configuration["RabbitMQ:HostName"],
+                    UserName = configuration["RabbitMQ:UserName"],
+                    Password = configuration["RabbitMQ:Password"],
+                    Port = AmqpTcpEndpoint.UseDefaultPort // ou especifique 5672 se estiver diferente
+                };
+
+                try
+                {
+                    // Criação e retorno da conexão
+                    var connection = factory.CreateConnection();
+                    Console.WriteLine("Conexão com RabbitMQ estabelecida com sucesso!");
+                    return connection;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Erro ao conectar com RabbitMQ: {ex.Message}");
+                    throw; // Repropaga a exceção, já que não faz sentido prosseguir sem RabbitMQ
+                }
+            });
+
+            services.AddSingleton<IElasticClient>(sp =>
+            {
+                var configuration = sp.GetRequiredService<IConfiguration>();
+                var uri = configuration["ElasticSearch:Uri"];
+                var defaultIndex = configuration["ElasticSearch:DefaultIndex"];
+
+                // Configuração do ElasticClient
+                var settings = new ConnectionSettings(new Uri(uri))
+                    .DefaultIndex(defaultIndex)
+                    .RequestTimeout(TimeSpan.FromSeconds(10)) // Timeout opcional
+                    .EnableDebugMode() // Modo de depuração (opcional)
+                    .PrettyJson(); // Facilitar a leitura de logs em JSON
+
+                return new ElasticClient(settings);
+            });
 
             services.AddValidatorsFromAssemblyContaining<CreateTaskRequestValidator>();
             services.AddValidatorsFromAssemblyContaining<GetTaskRequestValidator>();
@@ -37,29 +86,8 @@ namespace TaskManager.IoC
             services.AddScoped<ITaskRepository, TaskRepository>();
             services.AddSingleton<IMessageBus, MessageBus>();
             services.AddScoped<ICacheService, CacheService>();
-
-            services.AddSingleton(sp =>
-            {
-                var factory = new ConnectionFactory()
-                {
-                    HostName = configuration["RabbitMQ:HostName"],
-                    UserName = configuration["RabbitMQ:UserName"],
-                    Password = configuration["RabbitMQ:Password"]
-                };
-                return factory.CreateConnection();
-            });
-
-            services.AddSingleton<IElasticClient>(sp =>
-            {
-                var configuration = sp.GetRequiredService<IConfiguration>();
-                var uri = configuration["ElasticSearch:Uri"];
-                var defaultIndex = configuration["ElasticSearch:DefaultIndex"];
-
-                var settings = new ConnectionSettings(new Uri(uri))
-                    .DefaultIndex(defaultIndex);
-
-                return new ElasticClient(settings);
-            });
+            services.AddScoped<IElasticSearchRepository, ElasticSearchRepository>();
+            services.AddSingleton(Log.Logger);
 
             return services;
         }

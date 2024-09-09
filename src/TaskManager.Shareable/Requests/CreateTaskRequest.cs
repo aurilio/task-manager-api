@@ -2,10 +2,9 @@
 using TaskManager.Shareable.DTOs;
 using TaskManager.Shareable.Responses;
 
-namespace TaskManager.Shareable.Requests
+namespace TaskManager.Shareable.Requests;
+
+public class CreateTaskRequest : IRequest<CreateTaskResponse>
 {
-    public class CreateTaskRequest : IRequest<CreateTaskResponse>
-    {
-        public TaskEntityDTO TaskEntityDTO { get; set; } = default!;
-    }
+    public TaskEntityDTO TaskEntityDTO { get; set; } = default!;
 }
