@@ -33,6 +33,12 @@ namespace TaskManager.Api
 
                 var app = builder.Build();
 
+                using (var scope = app.Services.CreateScope())
+                {
+                    var dbContext = scope.ServiceProvider.GetRequiredService<TaskDbContext>();
+                    dbContext.Database.Migrate(); // Aplica as migrações pendentes
+                }
+
                 // Configure the HTTP request pipeline.
                 if (app.Environment.IsDevelopment())
                 {

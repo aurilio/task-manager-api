@@ -1,44 +1,21 @@
-version: '3.8'
-
 services:
-  web:
-    image: nginx:latest # Substituímos por uma imagem base qualquer, como o NGINX
-    container_name: task-manager
-    ports:
-      - "5000:80"
-    depends_on:
-      - sqlserver
-      - redis
-      - elasticsearch
-      - logstash
-      - rabbitmq
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__SqlServer=Server=sqlserver;Database=TaskManagerDB;User Id=sa;Password=Root@1234;
-      - REDIS_CONNECTION_STRING=redis:6379
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - RABBITMQ_HOSTNAME=rabbitmq
-      - RABBITMQ_USERNAME=guest
-      - RABBITMQ_PASSWORD=guest
-    restart: unless-stopped
-
   sqlserver:
-    image: mcr.microsoft.com/mssql/server:2019-latest
-    container_name: sqlserver
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - MSSQL_SA_PASSWORD=Root@1234
+      - ACCEPT_EULA=Y
     ports:
       - "1433:1433"
-    environment:
-      # - SA_PASSWORD=Root@1234
-      - MSSQL_SA_PASSWORD 
-      - ACCEPT_EULA=Y
-    volumes:
-      - sqlserver-data:/var/opt/mssql
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Root@1234 -Q 'SELECT 1'"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
+    networks:
+      - task-manager-network
+  
+  mssqltools:
+    image: mcr.microsoft.com/mssql-tools
+    depends_on:
+      - sqlserver
+    networks:
+      - task-manager-network
+  
   redis:
     image: redis:latest
     container_name: redis
@@ -47,71 +24,143 @@ services:
     volumes:
       - redis-data:/data
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.16.3
-    container_name: elasticsearch
-    environment:
-      - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-      nofile:
-        soft: 65536
-        hard: 65536
-    volumes:
-      - elasticsearch-data:/usr/share/elasticsearch/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9200/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  logstash:
-    image: docker.elastic.co/logstash/logstash:7.16.3
-    container_name: logstash
-    ports:
-      - "5044:5044"
-    volumes:
-      - ./logstash:/usr/share/logstash/config  # Monte o diretório contendo o logstash.yml
-      - ./logstash/pipeline:/usr/share/logstash/pipeline
-    environment:
-      - LS_JAVA_OPTS=-Xmx256m -Xms256m
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9600/_node/pipelines?pretty"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
+    networks:
+      - task-manager-network
+      
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
     ports:
       - "5672:5672"
-      - "15672:15672"  # Porta para o painel de gerenciamento do RabbitMQ
+      - "15672:15672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:15672/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    networks:
+      - task-manager-network
 
 volumes:
   sqlserver-data:
   redis-data:
-  elasticsearch-data:
   rabbitmq-data:
+  
+networks:
+  task-manager-network:
+    name: task-manager-network
+    driver: bridge
+
+  
+  # sqlserver:
+    # image: mcr.microsoft.com/mssql/server:2022-latest
+    # container_name: sqlserver
+    # ports:
+      # - "1433:1433"
+    # environment:
+      # - MSSQL_SA_PASSWORD=Root@1234
+      # - ACCEPT_EULA=Y
+    # volumes:
+      # - sqlserver-data:/var/opt/mssql
+
+# =====================================================================================
+
+# version: '3.8'
+
+# services:
+  # web:
+    # image: nginx:latest # Substituímos por uma imagem base qualquer, como o NGINX
+    # container_name: task-manager
+    # ports:
+      # - "5000:80"
+    # depends_on:
+      # - sqlserver
+      # - redis
+      # - elasticsearch
+      # - logstash
+      # - rabbitmq
+    # environment:
+      # - ASPNETCORE_ENVIRONMENT=Production
+      # - ConnectionStrings__SqlServer=Server=sqlserver;Database=TaskManagerDB;User Id=sa;Password=Root@1234;
+      # - REDIS_CONNECTION_STRING=redis:6379
+      # - ELASTICSEARCH_URL=http://elasticsearch:9200
+      # - RABBITMQ_HOSTNAME=rabbitmq
+      # - RABBITMQ_USERNAME=guest
+      # - RABBITMQ_PASSWORD=guest
+    # restart: unless-stopped
+
+  # sqlserver:
+    # image: mcr.microsoft.com/mssql/server:2022-latest
+    # container_name: sqlserver
+    # ports:
+      # - "1433:1433"
+    # environment:
+      # - MSSQL_SA_PASSWORD=Root@1234
+      # - ACCEPT_EULA=Y
+    # volumes:
+      # - sqlserver-data:/var/opt/mssql
+    # healthcheck:
+      # test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Root@1234 -Q 'SELECT 1'"]
+      # interval: 10s
+      # timeout: 5s
+      # retries: 10
+    # command:
+      # - /bin/bash
+      # - -c
+      # - |
+        # apt-get update && \
+        # apt-get install -y mssql-tools unixodbc-dev && \
+        # /opt/mssql/bin/sqlservr
+
+
+
+  # elasticsearch:
+    # image: docker.elastic.co/elasticsearch/elasticsearch:7.16.3
+    # container_name: elasticsearch
+    # environment:
+      # - discovery.type=single-node
+      # - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    # ports:
+      # - "9200:9200"
+      # - "9300:9300"
+    # ulimits:
+      # memlock:
+        # soft: -1
+        # hard: -1
+      # nofile:
+        # soft: 65536
+        # hard: 65536
+    # volumes:
+      # - elasticsearch-data:/usr/share/elasticsearch/data
+    # restart: unless-stopped
+    # healthcheck:
+      # test: ["CMD", "curl", "-f", "http://localhost:9200/"]
+      # interval: 30s
+      # timeout: 10s
+      # retries: 3
+
+  # logstash:
+    # image: docker.elastic.co/logstash/logstash:7.16.3
+    # container_name: logstash
+    # ports:
+      # - "5044:5044"
+    # volumes:
+      # - ./logstash:/usr/share/logstash/config  # Monte o diretório contendo o logstash.yml
+      # - ./logstash/pipeline:/usr/share/logstash/pipeline
+    # environment:
+      # - LS_JAVA_OPTS=-Xmx256m -Xms256m
+    # restart: unless-stopped
+    # healthcheck:
+      # test: ["CMD", "curl", "-f", "http://localhost:9600/_node/pipelines?pretty"]
+      # interval: 30s
+      # timeout: 10s
+      # retries: 3
+
+  
+
+# volumes:
+  # sqlserver-data:
+  # redis-data:
+  # elasticsearch-data:
+  # rabbitmq-data:

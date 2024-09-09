@@ -23,42 +23,45 @@ namespace TaskManager.IoC
         public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DomainEntryPoint).Assembly));
-
-            //services.AddDbContext<TaskDbContext>(options =>
-            //    options.UseSqlServer(services.BuildServiceProvider().GetRequiredService<IConfiguration>().GetConnectionString("DefaultConnection")));
+                    
             services.AddDbContext<TaskDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"), sqlOptions => sqlOptions.EnableRetryOnFailure()));
 
-            //services.AddStackExchangeRedisCache(options =>
-            //{
-            //    options.Configuration = services.BuildServiceProvider().GetRequiredService<IConfiguration>().GetConnectionString("RedisConnection");
-            //});
             var redisConnectionString = configuration.GetConnectionString("RedisConnection");
+
             services.AddSingleton<IConnectionMultiplexer>(sp =>
-                ConnectionMultiplexer.Connect(redisConnectionString));
-
-
-            services.AddValidatorsFromAssemblyContaining<CreateTaskRequestValidator>();
-            services.AddValidatorsFromAssemblyContaining<GetTaskRequestValidator>();
-            services.AddValidatorsFromAssemblyContaining<UpdateTaskRequestValidator>();
-            services.AddValidatorsFromAssemblyContaining<DeleteTaskRequestValidator>();
-
-            services.AddScoped<ITaskRepository, TaskRepository>();
-            services.AddSingleton<IMessageBus, MessageBus>();
-            services.AddScoped<ICacheService, CacheService>();
-            services.AddScoped<IElasticSearchRepository, ElasticSearchRepository>();
-            services.AddSingleton(Log.Logger);
+            {
+                var configuration = ConfigurationOptions.Parse(redisConnectionString);
+                configuration.AbortOnConnectFail = false;
+                return ConnectionMultiplexer.Connect(configuration);
+            });
 
             services.AddSingleton(sp =>
             {
+                var configuration = sp.GetRequiredService<IConfiguration>();
+
                 var factory = new ConnectionFactory()
                 {
                     HostName = configuration["RabbitMQ:HostName"],
                     UserName = configuration["RabbitMQ:UserName"],
-                    Password = configuration["RabbitMQ:Password"]
+                    Password = configuration["RabbitMQ:Password"],
+                    Port = AmqpTcpEndpoint.UseDefaultPort // ou especifique 5672 se estiver diferente
                 };
-                return factory.CreateConnection();
+
+                try
+                {
+                    // Criação e retorno da conexão
+                    var connection = factory.CreateConnection();
+                    Console.WriteLine("Conexão com RabbitMQ estabelecida com sucesso!");
+                    return connection;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Erro ao conectar com RabbitMQ: {ex.Message}");
+                    throw; // Repropaga a exceção, já que não faz sentido prosseguir sem RabbitMQ
+                }
             });
+
 
             services.AddSingleton<IElasticClient>(sp =>
             {
@@ -71,6 +74,17 @@ namespace TaskManager.IoC
 
                 return new ElasticClient(settings);
             });
+
+            services.AddValidatorsFromAssemblyContaining<CreateTaskRequestValidator>();
+            services.AddValidatorsFromAssemblyContaining<GetTaskRequestValidator>();
+            services.AddValidatorsFromAssemblyContaining<UpdateTaskRequestValidator>();
+            services.AddValidatorsFromAssemblyContaining<DeleteTaskRequestValidator>();
+
+            services.AddScoped<ITaskRepository, TaskRepository>();
+            services.AddSingleton<IMessageBus, MessageBus>();
+            services.AddScoped<ICacheService, CacheService>();
+            services.AddScoped<IElasticSearchRepository, ElasticSearchRepository>();
+            services.AddSingleton(Log.Logger);
 
             return services;
         }
