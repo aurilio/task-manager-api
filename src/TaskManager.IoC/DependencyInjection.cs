@@ -62,15 +62,18 @@ namespace TaskManager.IoC
                 }
             });
 
-
             services.AddSingleton<IElasticClient>(sp =>
             {
                 var configuration = sp.GetRequiredService<IConfiguration>();
                 var uri = configuration["ElasticSearch:Uri"];
                 var defaultIndex = configuration["ElasticSearch:DefaultIndex"];
 
+                // Configuração do ElasticClient
                 var settings = new ConnectionSettings(new Uri(uri))
-                    .DefaultIndex(defaultIndex);
+                    .DefaultIndex(defaultIndex)
+                    .RequestTimeout(TimeSpan.FromSeconds(10)) // Timeout opcional
+                    .EnableDebugMode() // Modo de depuração (opcional)
+                    .PrettyJson(); // Facilitar a leitura de logs em JSON
 
                 return new ElasticClient(settings);
             });

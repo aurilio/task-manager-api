@@ -6,6 +6,8 @@ services:
       - ACCEPT_EULA=Y
     ports:
       - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
     networks:
       - task-manager-network
   
@@ -31,8 +33,8 @@ services:
     image: rabbitmq:3-management
     container_name: rabbitmq
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - 5672:5672
+      - 15672:15672
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     environment:
@@ -41,11 +43,39 @@ services:
     restart: unless-stopped
     networks:
       - task-manager-network
+      
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - task-manager-network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.6.0
+    container_name: logstash
+    volumes:
+      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    ports:
+      - "5044:5044"
+      - "9600:9600"  # Porta para o monitoramento do Logstash (Opcional)
+    depends_on:
+      - elasticsearch
+    networks:
+      - task-manager-network
 
 volumes:
   sqlserver-data:
   redis-data:
   rabbitmq-data:
+  elasticsearch-data:
   
 networks:
   task-manager-network:

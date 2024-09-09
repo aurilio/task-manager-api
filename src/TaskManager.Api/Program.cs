@@ -11,9 +11,13 @@ namespace TaskManager.Api
         public static void Main(string[] args)
         {
             // Configura o Serilog antes de construir o host
+            //Log.Logger = new LoggerConfiguration()
+            //    .ReadFrom.Configuration(BuildConfiguration()) // Lê configuração do appsettings.json
+            //    .WriteTo.Console() // Adicione outros sinks conforme necessário
+            //    .CreateLogger();
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(BuildConfiguration()) // Lê configuração do appsettings.json
-                .WriteTo.Console() // Adicione outros sinks conforme necessário
+                .WriteTo.Console() // Escreve logs no console
                 .CreateLogger();
 
             try

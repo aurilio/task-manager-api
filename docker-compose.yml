@@ -6,6 +6,8 @@ services:
       - ACCEPT_EULA=Y
     ports:
       - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
     networks:
       - task-manager-network
   
@@ -41,11 +43,66 @@ services:
     restart: unless-stopped
     networks:
       - task-manager-network
+      
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - task-manager-network
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "1.0"
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.6.0
+    container_name: logstash
+    volumes:
+      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    ports:
+      - "5044:5044"
+      - "9600:9600"  # Porta para o monitoramento do Logstash (Opcional)
+    depends_on:
+      - elasticsearch
+    networks:
+      - task-manager-network
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "0.5"
+      
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - elasticsearch
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - task-manager-network
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
 
 volumes:
   sqlserver-data:
   redis-data:
   rabbitmq-data:
+  elasticsearch-data:
+  grafana-data:
   
 networks:
   task-manager-network:
