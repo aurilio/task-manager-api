@@ -37,17 +37,14 @@ public class GetTasksHandlerTests
     {
         // Arrange
         var request = new GetTaskRequest { TaskId = Guid.NewGuid() };
-        var cachedData = JsonSerializer.Serialize(new GetTaskResponse
+        var cachedData = JsonSerializer.Serialize(new TaskEntityGetDTO
         {
-            TaskEntityDto = new TaskEntityDTO
-            {
-                Id = request.TaskId,
-                Title = "Cached Title",
-                Description = "Cached Description",
-                IsCompleted = false,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            }
+            Id = request.TaskId,
+            Title = "Cached Title",
+            Description = "Cached Description",
+            IsCompleted = false,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         });
 
         _cacheService.GetCacheAsync(request.TaskId.ToString()).Returns(cachedData);
@@ -56,8 +53,8 @@ public class GetTasksHandlerTests
         var response = await _handler.Handle(request, CancellationToken.None);
 
         // Assert
-        response.TaskEntityDto.Should().NotBeNull();
-        response.TaskEntityDto.Title.Should().Be("Cached Title");
+        response.TaskEntityGetDto.Should().NotBeNull();
+        response.TaskEntityGetDto.Title.Should().Be("Cached Title");
     }
 
     [Fact]
@@ -82,8 +79,8 @@ public class GetTasksHandlerTests
         var response = await _handler.Handle(request, CancellationToken.None);
 
         // Assert
-        response.TaskEntityDto.Should().NotBeNull();
-        response.TaskEntityDto.Title.Should().Be("DB Title");
+        response.TaskEntityGetDto.Should().NotBeNull();
+        response.TaskEntityGetDto.Title.Should().Be("DB Title");
     }
 
     [Fact]
@@ -99,6 +96,6 @@ public class GetTasksHandlerTests
         var response = await _handler.Handle(request, CancellationToken.None);
 
         // Assert
-        response.TaskEntityDto.Id.Equals(Guid.Empty);
+        response.TaskEntityGetDto.Id.Equals(Guid.Empty);
     }
 }
