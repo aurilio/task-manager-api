@@ -16,80 +16,86 @@ using MediatR;
 using StackExchange.Redis;
 using Serilog;
 
-namespace TaskManager.IoC
+namespace TaskManager.IoC;
+
+public static class DependencyInjection
 {
-    public static class DependencyInjection
+    public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
-        public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DomainEntryPoint).Assembly));
+                
+        services.AddDbContext<TaskDbContext>(options =>
+            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"), sqlOptions => sqlOptions.EnableRetryOnFailure()));
+
+        var redisConnectionString = configuration.GetConnectionString("RedisConnection");
+
+        services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
-            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DomainEntryPoint).Assembly));
-                    
-            services.AddDbContext<TaskDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"), sqlOptions => sqlOptions.EnableRetryOnFailure()));
+            var configuration = ConfigurationOptions.Parse(redisConnectionString);
+            configuration.AbortOnConnectFail = false;
+            return ConnectionMultiplexer.Connect(configuration);
+        });
 
-            var redisConnectionString = configuration.GetConnectionString("RedisConnection");
+        services.AddSingleton(sp =>
+        {
+            var configuration = sp.GetRequiredService<IConfiguration>();
 
-            services.AddSingleton<IConnectionMultiplexer>(sp =>
+            var factory = new ConnectionFactory()
             {
-                var configuration = ConfigurationOptions.Parse(redisConnectionString);
-                configuration.AbortOnConnectFail = false;
-                return ConnectionMultiplexer.Connect(configuration);
-            });
+                HostName = configuration["RabbitMQ:HostName"],
+                UserName = configuration["RabbitMQ:UserName"],
+                Password = configuration["RabbitMQ:Password"],
+                Port = AmqpTcpEndpoint.UseDefaultPort // ou especifique 5672 se estiver diferente
+            };
 
-            services.AddSingleton(sp =>
+            try
             {
-                var configuration = sp.GetRequiredService<IConfiguration>();
-
-                var factory = new ConnectionFactory()
-                {
-                    HostName = configuration["RabbitMQ:HostName"],
-                    UserName = configuration["RabbitMQ:UserName"],
-                    Password = configuration["RabbitMQ:Password"],
-                    Port = AmqpTcpEndpoint.UseDefaultPort // ou especifique 5672 se estiver diferente
-                };
-
-                try
-                {
-                    // Criação e retorno da conexão
-                    var connection = factory.CreateConnection();
-                    Console.WriteLine("Conexão com RabbitMQ estabelecida com sucesso!");
-                    return connection;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Erro ao conectar com RabbitMQ: {ex.Message}");
-                    throw; // Repropaga a exceção, já que não faz sentido prosseguir sem RabbitMQ
-                }
-            });
-
-            services.AddSingleton<IElasticClient>(sp =>
+                var connection = factory.CreateConnection();
+                Console.WriteLine("Conexão com RabbitMQ estabelecida com sucesso!");
+                return connection;
+            }
+            catch (Exception ex)
             {
-                var configuration = sp.GetRequiredService<IConfiguration>();
-                var uri = configuration["ElasticSearch:Uri"];
-                var defaultIndex = configuration["ElasticSearch:DefaultIndex"];
+                Console.WriteLine($"Erro ao conectar com RabbitMQ: {ex.Message}");
+                throw;
+            }
+        });
 
-                // Configuração do ElasticClient
-                var settings = new ConnectionSettings(new Uri(uri))
-                    .DefaultIndex(defaultIndex)
-                    .RequestTimeout(TimeSpan.FromSeconds(10)) // Timeout opcional
-                    .EnableDebugMode() // Modo de depuração (opcional)
-                    .PrettyJson(); // Facilitar a leitura de logs em JSON
+        services.AddSingleton<IElasticClient>(sp =>
+        {
+            var configuration = sp.GetRequiredService<IConfiguration>();
+            var uri = configuration["ElasticSearch:Uri"];
+            var defaultIndex = configuration["ElasticSearch:DefaultIndex"];
 
-                return new ElasticClient(settings);
-            });
+            var settings = new ConnectionSettings(new Uri(uri))
+                .DefaultIndex(defaultIndex)
+                .RequestTimeout(TimeSpan.FromSeconds(10))
+                .EnableDebugMode()
+                .PrettyJson();
 
-            services.AddValidatorsFromAssemblyContaining<CreateTaskRequestValidator>();
-            services.AddValidatorsFromAssemblyContaining<GetTaskRequestValidator>();
-            services.AddValidatorsFromAssemblyContaining<UpdateTaskRequestValidator>();
-            services.AddValidatorsFromAssemblyContaining<DeleteTaskRequestValidator>();
+            var client = new ElasticClient(settings);
 
-            services.AddScoped<ITaskRepository, TaskRepository>();
-            services.AddSingleton<IMessageBus, MessageBus>();
-            services.AddScoped<ICacheService, CacheService>();
-            services.AddScoped<IElasticSearchRepository, ElasticSearchRepository>();
-            services.AddSingleton(Log.Logger);
+            var pingResponse = client.Ping();
 
-            return services;
-        }
+            if (!pingResponse.IsValid)
+            {
+                throw new Exception($"Erro ao conectar com Elasticsearch: {pingResponse.OriginalException.Message}");
+            }
+
+            return client;
+        });
+
+        services.AddValidatorsFromAssemblyContaining<CreateTaskRequestValidator>();
+        services.AddValidatorsFromAssemblyContaining<GetTaskRequestValidator>();
+        services.AddValidatorsFromAssemblyContaining<UpdateTaskRequestValidator>();
+        services.AddValidatorsFromAssemblyContaining<DeleteTaskRequestValidator>();
+
+        services.AddScoped<ITaskRepository, TaskRepository>();
+        services.AddSingleton<IMessageBus, MessageBus>();
+        services.AddScoped<ICacheService, CacheService>();
+        services.AddScoped<IElasticSearchRepository, ElasticSearchRepository>();
+        services.AddSingleton(Log.Logger);
+
+        return services;
     }
 }

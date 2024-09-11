@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using NSubstitute;
+﻿using NSubstitute;
 using Serilog;
 using TaskManager.Domain.Entities;
 using TaskManager.Domain.Handlers;
@@ -43,7 +42,7 @@ public class CreateTaskHandlerTests
         // Arrange
         var request = new CreateTaskRequest
         {
-            TaskEntityDTO = new TaskEntityDTO
+            TaskEntityDTO = new TaskEntityCreateDTO
             {
                 Title = "Custom Title",
                 Description = "Custom Description",

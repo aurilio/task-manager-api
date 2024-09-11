@@ -45,7 +45,7 @@ public static class Endpoints
         return await mediator.Send(new GetAllTasksRequest(pageNumber, pageSize ));
     }
 
-    private static async Task<GetTaskResponse> GetTaskAsync([FromServices] IMediator mediator, [FromBody] Guid id)
+    private static async Task<GetTaskResponse> GetTaskAsync([FromServices] IMediator mediator, [FromRoute] Guid id)
     {
         return await mediator.Send(new GetTaskRequest() { TaskId = id });
     }
@@ -59,12 +59,12 @@ public static class Endpoints
         return await mediator.Send(new GetTasksBySearchRequest(search, pageNumber, pageSize));
     }
 
-    private static async Task<CreateTaskResponse> CreateTaskAsync ([FromServices] IMediator mediator, TaskEntityDTO taskEntityDTO)
+    private static async Task<CreateTaskResponse> CreateTaskAsync ([FromServices] IMediator mediator, TaskEntityCreateDTO taskEntityDTO)
     {
         return await mediator.Send(new CreateTaskRequest() { TaskEntityDTO = taskEntityDTO });
     }
 
-    private static async Task<UpdateTaskResponse> UpdateTask([FromServices] IMediator mediator, [FromBody] TaskEntityDTO taskEntityDTO)
+    private static async Task<UpdateTaskResponse> UpdateTask([FromServices] IMediator mediator, [FromBody] TaskEntityUpdateDTO taskEntityDTO)
     {
         return await mediator.Send(new UpdateTaskRequest() { TaskEntityDTO = taskEntityDTO });
     }

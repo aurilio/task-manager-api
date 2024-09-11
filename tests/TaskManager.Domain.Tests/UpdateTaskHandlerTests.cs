@@ -42,7 +42,7 @@ namespace TaskManager.Domain.Tests
             // Arrange
             var taskId = Guid.NewGuid();
             var request = new UpdateTaskRequest{
-                TaskEntityDTO = new TaskEntityDTO
+                TaskEntityDTO = new TaskEntityUpdateDTO
                 {
                     Id = taskId,
                     Title = "Updated Title",
@@ -89,7 +89,7 @@ namespace TaskManager.Domain.Tests
             var taskId = Guid.NewGuid();
             var request = new UpdateTaskRequest
             {
-                TaskEntityDTO = new TaskEntityDTO
+                TaskEntityDTO = new TaskEntityUpdateDTO
                 {
                     Id = taskId,
                     Title = "Updated Title",
@@ -120,7 +120,7 @@ namespace TaskManager.Domain.Tests
             var taskId = Guid.NewGuid();
             var request = new UpdateTaskRequest
             {
-                TaskEntityDTO = new TaskEntityDTO
+                TaskEntityDTO = new TaskEntityUpdateDTO
                 {
                     Id = taskId,
                     Title = "Updated Title",
